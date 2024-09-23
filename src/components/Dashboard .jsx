@@ -7,30 +7,30 @@ import FilterProducts from "./FilterProducts";
 
 const Dashboard = () => {
   const ITEMS_PER_PAGE = 20;
-  const [filter, setFilter] = useState("all");
-  const [priceRange, setPriceRange] = useState("all");
-  const [popularityRange, setPopularityRange] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState('all');
+  const [priceRange, setPriceRange] = useState('all');
+  const [popularityRange, setPopularityRange] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
   const handleFilterChange = (newFilter) => {
     setFilter(newFilter);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page on filter change
   };
 
   const handlePriceChange = (newPriceRange) => {
     setPriceRange(newPriceRange);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page on filter change
   };
 
   const handlePopularityChange = (newPopularityRange) => {
     setPopularityRange(newPopularityRange);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page on filter change
   };
 
   const handleSearchChange = (query) => {
     setSearchQuery(query.toLowerCase());
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page on search
   };
 
   const productsArray = Object.entries(data.products).map(([key, value]) => ({
@@ -44,25 +44,18 @@ const Dashboard = () => {
     let matchesPopularity = true;
     let matchesSearch = true;
 
-    // Filter by status (if applicable)
-    if (filter !== "all") {
-      matchesFilter = product.status === filter;
+    if (filter !== 'all') {
+      matchesFilter = product.status === filter; // Ensure your product has a 'status' property
     }
 
-    // Filter by price range
-    if (priceRange !== "all") {
-      const [min, max] = priceRange.split("-").map(Number);
-      matchesPrice = max
-        ? Number(product.price) >= min && Number(product.price) <= max
-        : Number(product.price) >= min;
+    if (priceRange !== 'all') {
+      const [min, max] = priceRange.split('-').map(Number);
+      matchesPrice = (max ? Number(product.price) >= min && Number(product.price) <= max : Number(product.price) >= min);
     }
 
-    // Filter by popularity range
-    if (popularityRange !== "all") {
-      const [min, max] = popularityRange.split("-").map(Number);
-      matchesPopularity = max
-        ? Number(product.popularity) >= min && Number(product.popularity) <= max
-        : Number(product.popularity) >= min;
+    if (popularityRange !== 'all') {
+      const [min, max] = popularityRange.split('-').map(Number);
+      matchesPopularity = (max ? Number(product.popularity) >= min && Number(product.popularity) <= max : Number(product.popularity) >= min);
     }
 
     if (searchQuery) {
@@ -72,26 +65,16 @@ const Dashboard = () => {
     return matchesFilter && matchesPrice && matchesPopularity && matchesSearch;
   });
 
-  // Calculate pagination
+  // Pagination logic
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentProducts = filteredProducts.slice(
-    startIndex,
-    startIndex + ITEMS_PER_PAGE
-  );
+  const indexOfLastProduct = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstProduct = indexOfLastProduct - ITEMS_PER_PAGE;
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
-  const paginationLinks = [];
-  const maxLinks = 5;
-  const startPage = Math.max(1, currentPage - Math.floor(maxLinks / 2));
-  const endPage = Math.min(totalPages, startPage + maxLinks - 1);
-
-  for (let i = startPage; i <= endPage; i++) {
-    paginationLinks.push(i);
-  }
 
   return (
     <>
@@ -104,21 +87,38 @@ const Dashboard = () => {
         popularityRange={popularityRange}
         handlePopularityChange={handlePopularityChange}
       />
-      <div className="product-grid">
+       <div className="product-grid">
         {currentProducts.map((product) => (
           <ProductList key={product.id} p={product} />
         ))}
       </div>
+
       <div className="pagination">
-        {paginationLinks.map((page) => (
+        <button
+          className="pagination-link"
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </button>
+        
+        {[...Array(totalPages).keys()].slice(currentPage - 1, currentPage + 4).map((number) => (
           <button
-            key={page}
-            className={`pagination-link ${page === currentPage ? 'active' : ''}`}
-            onClick={() => setCurrentPage(page)}
+            key={number + 1}
+            className={`pagination-link ${number + 1 === currentPage ? 'active' : ''}`}
+            onClick={() => handlePageChange(number + 1)}
           >
-            {page}
+            {number + 1}
           </button>
         ))}
+
+        <button
+          className="pagination-link"
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          Next
+        </button>
       </div>
     </>
   );
